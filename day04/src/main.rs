@@ -47,7 +47,7 @@ fn main() {
         let c1 = map.values().any(|v| *v == 2);
 
         let mut compare_to = 0;
-        let c2 = !s.chars().clone().any(|c| {
+        let c2 = !s.chars().any(|c| {
             let n = c.to_digit(10).unwrap();
             let x = n < compare_to;
             compare_to = n;
