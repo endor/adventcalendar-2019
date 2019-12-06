@@ -93,18 +93,7 @@
 
 use std::fs;
 
-fn get_by_position(numbers: &Vec<i32>, position: usize) -> i32 {
-    let pos = *numbers.get(position).unwrap() as usize;
-    *numbers.get(pos).unwrap()
-}
-
-fn get_by_value(numbers: &Vec<i32>, position: usize) -> i32 {
-    *numbers.get(position).unwrap()
-}
-
-fn pad(n: &i32) -> String {
-    let s = n.to_string();
-
+fn pad(s: String) -> String {
     if s.len() == 1 {
         format!("000{}", s)
     } else if s.len() == 3 {
@@ -119,9 +108,9 @@ fn collect_parameters(s: &str, numbers: &Vec<i32>, position: usize) -> Vec<i32> 
 
     s.chars().rev().enumerate().for_each(|(i, c)| {
         if c == '0' {   // position mode
-            parameters.push(get_by_position(numbers, position + i + 1));
+            parameters.push(numbers[numbers[position + i + 1] as usize]);
         } else {        // immediate mode
-            parameters.push(get_by_value(numbers, position + i + 1));
+            parameters.push(numbers[position + i + 1]);
         }
     });
 
@@ -129,14 +118,14 @@ fn collect_parameters(s: &str, numbers: &Vec<i32>, position: usize) -> Vec<i32> 
 }
 
 fn recalculate(position: usize, numbers: &mut Vec<i32>, inputs: &mut Vec<i32>) {
-    match numbers.get(position) {
-        Some(3) => {
+    match numbers.get(position).map(|x| x.to_string()) {
+        Some(x) if x.ends_with("3") => {
             let input = inputs.pop().expect("No more inputs available");
-            let pos = *numbers.get(position + 1).unwrap() as usize;
+            let pos = numbers[position + 1] as usize;
             std::mem::replace(&mut numbers[pos], input);
             recalculate(position + 2, numbers, inputs);
         },
-        Some(x) if x.to_string().ends_with("5") => {
+        Some(x) if x.ends_with("5") => {
             let mut s = pad(x);
             let _ = s.drain(s.len()-2..);
 
@@ -148,7 +137,7 @@ fn recalculate(position: usize, numbers: &mut Vec<i32>, inputs: &mut Vec<i32>) {
                 recalculate(position + 3, numbers, inputs);
             }
         },
-        Some(x) if x.to_string().ends_with("6") => {
+        Some(x) if x.ends_with("6") => {
             let mut s = pad(x);
             let _ = s.drain(s.len()-2..);
 
@@ -160,12 +149,12 @@ fn recalculate(position: usize, numbers: &mut Vec<i32>, inputs: &mut Vec<i32>) {
                 recalculate(position + 3, numbers, inputs);
             }
         },
-        Some(x) if x.to_string().ends_with("7") => {
+        Some(x) if x.ends_with("7") => {
             let mut s = pad(x);
             let _ = s.drain(s.len()-2..);
 
             let parameters = collect_parameters(&s, numbers, position);
-            let pos = *numbers.get(position + 3).unwrap() as usize;
+            let pos = numbers[position + 3] as usize;
 
             if parameters[0] < parameters[1] {
                 std::mem::replace(&mut numbers[pos], 1);
@@ -175,12 +164,12 @@ fn recalculate(position: usize, numbers: &mut Vec<i32>, inputs: &mut Vec<i32>) {
 
             recalculate(position + 4, numbers, inputs);
         },
-        Some(x) if x.to_string().ends_with("8") => {
+        Some(x) if x.ends_with("8") => {
             let mut s = pad(x);
             let _ = s.drain(s.len()-2..);
 
             let parameters = collect_parameters(&s, numbers, position);
-            let pos = *numbers.get(position + 3).unwrap() as usize;
+            let pos = numbers[position + 3] as usize;
 
             if parameters[0] == parameters[1] {
                 std::mem::replace(&mut numbers[pos], 1);
@@ -190,28 +179,28 @@ fn recalculate(position: usize, numbers: &mut Vec<i32>, inputs: &mut Vec<i32>) {
 
             recalculate(position + 4, numbers, inputs);
         },
-        Some(99) => {
+        Some(x) if x.ends_with("99") => {
             return;
         },
-        Some(x) if x.to_string().ends_with("4") => {
+        Some(x) if x.ends_with("4") => {
             let s = x.to_string();
 
             let val = if s.starts_with("0") || s == "4".to_string() {
-                get_by_position(numbers, position + 1)
+                numbers[numbers[position + 1] as usize]
             } else {
-                get_by_value(numbers, position + 1)
+                numbers[position + 1]
             };
 
             println!("output {}", val);
 
             recalculate(position + 2, numbers, inputs);
         },
-        Some(x) if x.to_string().ends_with("1") || x.to_string().ends_with("2") => {
+        Some(x) if x.ends_with("1") || x.ends_with("2") => {
             let mut s = pad(x);
             let op: String = s.drain(s.len()-2..).collect();
             let parameters = collect_parameters(&s, numbers, position);
 
-            let pos = *numbers.get(position + 3).unwrap() as usize;
+            let pos = numbers[position + 3] as usize;
             let a = parameters[0];
             let b = parameters[1];
 
@@ -223,8 +212,7 @@ fn recalculate(position: usize, numbers: &mut Vec<i32>, inputs: &mut Vec<i32>) {
 
             recalculate(position + 4, numbers, inputs);
         },
-        x => {
-            println!("{:?}", x);
+        _ => {
             panic!("This should not happen");
         },
     }
